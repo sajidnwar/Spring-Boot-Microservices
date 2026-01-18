@@ -1,4 +1,4 @@
-package com.sajid.bookstore.order_service;
+package com.sajid.bookstore.orders;
 
 import org.springframework.boot.SpringApplication;
 
