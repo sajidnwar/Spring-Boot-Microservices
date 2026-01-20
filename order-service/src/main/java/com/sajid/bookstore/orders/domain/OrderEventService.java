@@ -6,9 +6,12 @@ import com.sajid.bookstore.orders.domain.models.OrderEventType;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
+
+import java.util.List;
 
 @Service
 @Transactional
@@ -37,6 +40,28 @@ public class OrderEventService {
         orderEvent.setCreatedAt(event.createdAt());
         orderEvent.setPayload(toJsonPayload(event));
         this.orderEventRepository.save(orderEvent);
+    }
+
+    public void publishOrderEvents() {
+        Sort sort = Sort.by("createdAt").ascending();
+        List<OrderEventEntity> events = orderEventRepository.findAll(sort);
+        log.info("Found {} Order Events to be published", events.size());
+        for (OrderEventEntity event : events) {
+            this.publishEvent(event);
+            orderEventRepository.delete(event);
+        }
+    }
+
+    private void publishEvent(OrderEventEntity event) {
+        OrderEventType eventType = event.getEventType();
+        switch (eventType) {
+            case ORDER_CREATED:
+                OrderCreatedEvent orderCreatedEvent = fromJsonPayload(event.getPayload(), OrderCreatedEvent.class);
+                orderEventPublisher.publish(orderCreatedEvent);
+                break;
+            default:
+                log.warn("Unsupported OrderEventType: {}", eventType);
+        }
     }
 
     private String toJsonPayload(Object object) {
