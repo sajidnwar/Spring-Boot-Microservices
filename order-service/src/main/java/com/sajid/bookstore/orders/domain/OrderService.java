@@ -2,6 +2,7 @@ package com.sajid.bookstore.orders.domain;
 
 import com.sajid.bookstore.orders.domain.models.CreateOrderRequest;
 import com.sajid.bookstore.orders.domain.models.CreateOrderResponse;
+import com.sajid.bookstore.orders.domain.models.OrderCreatedEvent;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +16,12 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderValidator orderValidator;
+    private final OrderEventService orderEventService;
 
-    public OrderService(OrderRepository orderRepository, OrderValidator orderValidator) {
+    public OrderService(OrderRepository orderRepository, OrderValidator orderValidator, OrderEventService orderEventService) {
         this.orderRepository = orderRepository;
         this.orderValidator = orderValidator;
+        this.orderEventService = orderEventService;
     }
 
 
@@ -28,8 +31,8 @@ public class OrderService {
         newOrder.setUserName(userName);
         OrderEntity savedOrder = this.orderRepository.save(newOrder);
         log.info("Created Order with orderNumber={}", savedOrder.getOrderNumber());
-//        OrderCreatedEvent orderCreatedEvent = OrderEventMapper.buildOrderCreatedEvent(savedOrder);
-//        orderEventService.save(orderCreatedEvent);
+        OrderCreatedEvent orderCreatedEvent = OrderEventMapper.buildOrderCreatedEvent(savedOrder);
+        orderEventService.save(orderCreatedEvent);
         return new CreateOrderResponse(savedOrder.getOrderNumber());
     }
 }
