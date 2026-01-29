@@ -1,0 +1,4 @@
+spring.application.name=api-gateway
+#spring.main.web-application-type=reactive
+#management.endpoints.web.exposure.include=health,info,gateway
+#spring.cloud.gateway.server.webflux.enabled=true

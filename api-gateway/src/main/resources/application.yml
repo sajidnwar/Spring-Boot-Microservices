@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: catalog-service
+              uri: ${CATALOG_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/catalog/**
+              filters:
+                - RewritePath=/catalog/?(?<segment>.*), /${segment}
+            - id: orders-service
+              uri: ${ORDER_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/orders/**
+              filters:
+                  - RewritePath=/orders/?(?<segment>.*), /${segment}
+            - id: openapi
+              uri: http://localhost:${server.port}
+              predicates:
+                - Path=/v3/api-docs/catalog/**, /v3/api-docs/orders/**
+              filters:
+                - RewritePath=/v3/api-docs/?(?<segment>.*), /${segment}/v3/api-docs
+server:
+  port: 8989
+  shutdown: graceful
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+#springdoc:
+#  api-docs:
+#    path: /v3/api-docs
+#    enabled: true
+#  swagger-ui:
+#    path: /index.html
+#    enabled: true
+springdoc:
+  swagger-ui:
+    use-root-path: true
+    URLs:
+      - name: catalog
+        url: /v3/api-docs/catalog
+      - name: orders
+        url: /v3/api-docs/orders
+    config-url: /v3/api-docs/swagger-config
